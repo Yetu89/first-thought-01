@@ -15,12 +15,20 @@ const WORD = "vellichor";
 const outputDir = process.env.OUTPUT_DIR ?? "/output";
 const outputPath = join(outputDir, "entry.txt");
 
-// Validation: exactly one word, 1-24 characters, no trailing newline.
-if (WORD.length < 1 || WORD.length > 24) {
-  throw new Error(`word must be 1-24 characters, got ${WORD.length}`);
+// Validation: exactly one word, 1-24 code points, no spaces, line
+// breaks or control characters, and no trailing newline in the file.
+// Length is counted in code points ([...WORD].length), not UTF-16
+// code units, so astral-plane characters count as one each.
+const codePoints = [...WORD];
+if (codePoints.length < 1 || codePoints.length > 24) {
+  throw new Error(
+    `word must be 1-24 code points, got ${codePoints.length}`,
+  );
 }
-if (/\s/.test(WORD)) {
-  throw new Error("word must be a single word with no whitespace");
+if (/[\s\p{Cc}]/u.test(WORD)) {
+  throw new Error(
+    "word must be a single word with no spaces, line breaks or control characters",
+  );
 }
 
 mkdirSync(outputDir, { recursive: true });
